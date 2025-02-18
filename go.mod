@@ -12,7 +12,7 @@ require (
 	k8s.io/component-base v0.32.2
 	k8s.io/dynamic-resource-allocation v0.32.0-alpha.1
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubelet v0.32.1
+	k8s.io/kubelet v0.32.2
 	k8s.io/kubernetes v1.32.2
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	tags.cncf.io/container-device-interface v0.8.0
