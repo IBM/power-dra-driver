@@ -1,6 +1,7 @@
 module github.com/IBM/power-dra-driver
 
 go 1.23.3
+toolchain go1.24.1
 
 require (
 	github.com/google/uuid v1.6.0
@@ -16,7 +17,7 @@ require (
 	k8s.io/kubernetes v1.32.2
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	tags.cncf.io/container-device-interface v0.8.0
-	tags.cncf.io/container-device-interface/specs-go v0.8.0
+	tags.cncf.io/container-device-interface/specs-go v1.0.0
 )
 
 require (
