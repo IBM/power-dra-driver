@@ -66,12 +66,15 @@ spec:
       - name: plugins-registry
         hostPath:
           path: /var/lib/kubelet/plugins_registry
+          type: Directory
       - name: plugins
         hostPath:
           path: /var/lib/kubelet/plugins
+          type: Directory
       - name: cdi
         hostPath:
           path: /var/run/cdi
+          type: Directory
       {{- with .Values.kubeletPlugin.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
