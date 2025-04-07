@@ -15,9 +15,6 @@ ENV GOROOT=/usr/local/go
 ENV PATH="/root/platform/bin:/opt/power-dra/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:$GOROOT/bin"
 
 COPY ./build/entrypoint.sh /
-COPY bin/* /opt/power-dra/bin/
-COPY bin/* /usr/local/bin/
-
-RUN chmod +x /opt/power-dra/bin/power-dra-kubeletplugin
+COPY --chmod=755 bin/* /opt/power-dra/bin/
 
 ENTRYPOINT ["/entrypoint.sh"]
