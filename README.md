@@ -19,7 +19,7 @@ You should also be using an OpenShift Container Platform 4.19+.
 ## Install
 
 ```
-helm upgrade -i \
+helm upgrade \
   --create-namespace \
   --namespace power-dra-driver \
   power-dra-driver \

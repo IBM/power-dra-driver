@@ -10,7 +10,7 @@ deviceClasses: ["nx-device"]
 imagePullSecrets: []
 image:
   repository: quay.io/powercloud/power-dra-driver
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "main"
 
