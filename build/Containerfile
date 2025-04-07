@@ -5,7 +5,6 @@ WORKDIR /workspace
 # Copy go.mod and go.sum first to cache dependencies
 COPY go.mod go.sum ./
 
-
 # Now copy the rest of the source code
 COPY . .
 
@@ -43,6 +42,7 @@ RUN [ "$(arch)" == "s390x" ]                                                    
 ENV GOROOT=/usr/local/go
 ENV PATH="/root/platform/bin:/opt/power-dra/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:$GOROOT/bin"
 
+
 COPY . .
 
 RUN ARCH=$(arch | sed 's|x86_64|amd64|g' | sed 's|aarch64|arm64|g') \
@@ -68,6 +68,7 @@ WORKDIR /
 COPY ./build/entrypoint.sh /
 COPY --from=builder /workspace/bin/power-dra-kubeletplugin /opt/power-dra/bin/
 COPY --from=builder /workspace/bin/power-dra-kubeletplugin /usr/local/bin/
+
 RUN chmod +x /opt/power-dra/bin/power-dra-kubeletplugin
 
 ENTRYPOINT ["/entrypoint.sh"]
