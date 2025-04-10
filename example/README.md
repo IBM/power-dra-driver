@@ -1,6 +1,6 @@
 
 
-1. Create namespace `oc new-project ex-power-dra`
+1. Create namespace `oc new-project ex-dra-driver`
 2. Install Scenario - `kustomize build examples/<scenario> | oc apply -f -`
 3. Uninstall Scenario - `kustomize build examples/<scenario> | oc delete -f -`
 

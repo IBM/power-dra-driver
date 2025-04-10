@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ex-power-dra-sec
+  name: ex-power-dra
   labels:
-    app: ex-power-dra-sec
+    app: ex-power-dra
 spec:
   selector:
     matchLabels:
@@ -13,10 +13,12 @@ spec:
       labels:
         app: ex-power-dra
     spec:
-      serviceAccountName: ex-sa
+      resourceClaims:
+        - name: nx-gzip
+          resourceClaimTemplateName: nx-gzip
       containers:
       - name: driver
-        image: quay.io/powercloud/power-dra-driver:latest
+        image: quay.io/powercloud/power-dra-driver:main
         imagePullPolicy: IfNotPresent
         command: [ "/bin/sleep" ]
         args: [ "infinity" ]
@@ -26,18 +28,20 @@ spec:
           requests:
             cpu: 100m
             memory: 100Mi
+          claims:
+          - name: nx-gzip
+        serviceAccount: ex-sa
+        serviceAccountName: ex-sa
         securityContext:
           privileged: false
-          runAsUser: 1000
+          runAsUser: 1000740023
           capabilities:
             drop:
               - ALL
           runAsNonRoot: true
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
-      # Resource Claims should be outside of `containers`
-      resourceClaims:
-      - name: nx-gzip
-        resourceClaimTemplateName: nx-gzip
+      serviceAccount: ex-sa
+      serviceAccountName: ex-sa
   updateStrategy:
     type: RollingUpdate

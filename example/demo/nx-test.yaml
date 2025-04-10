@@ -1,0 +1,61 @@
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nx-gzip-test1
+
+---
+apiVersion: resource.k8s.io/v1alpha3
+kind: ResourceClaimTemplate
+metadata:
+  namespace: ex-power-dra
+  name: nx-gzip
+spec:
+  spec:
+    devices:
+      requests:
+      - name: nx-gzip
+        deviceClassName: nx-device.power.ibm.com
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: ex-power-dra
+  name: pod0
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: worker-0
+  containers:
+  - name: ctr0
+    image: quay.io/powercloud/power-dra-driver:main
+    command: ["bash", "-c"]
+    args: ["export; trap 'exit 0' TERM; sleep 9999 & wait"]
+    resources:
+      claims:
+      - name: nx-gzip
+  resourceClaims:
+  - name: nx-gzip
+    resourceClaimTemplateName: nx-gzip-template-0
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: ex-power-dra
+  name: pod1
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: worker-0
+  containers:
+  - name: ctr0
+    image: quay.io/powercloud/power-dra-driver:main
+    command: ["bash", "-c"]
+    args: ["export; trap 'exit 0' TERM; sleep 9999 & wait"]
+    resources:
+      claims:
+      - name: nx-gzip
+  resourceClaims:
+  - name: nx-gzip
+    resourceClaimTemplateName: nx-gzip-template-1

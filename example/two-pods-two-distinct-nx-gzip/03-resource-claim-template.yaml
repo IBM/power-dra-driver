@@ -1,8 +1,22 @@
-apiVersion: resource.k8s.io/v1beta1
+---
+apiVersion: resource.k8s.io/v1alpha3
 kind: ResourceClaimTemplate
 metadata:
-  namespace: gpu-test1
-  name: nx-gzip
+  namespace: ex-power-dra
+  name: nx-gzip-template-0
+spec:
+  spec:
+    devices:
+      requests:
+      - name: nx-gzip
+        deviceClassName: nx.device.power.ibm.com
+
+---
+apiVersion: resource.k8s.io/v1alpha3
+kind: ResourceClaimTemplate
+metadata:
+  namespace: ex-power-dra
+  name: nx-gzip-template-1
 spec:
   spec:
     devices:

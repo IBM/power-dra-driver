@@ -12,5 +12,6 @@ resources:
 - 01-sa.yaml
 - 02-rbac.yaml
 - 03-resource-claim-template.yaml
-- 04-deployment-first.yaml
-- 05-deployment-second.yaml
+- 04-resource-slice-template.yaml
+- 05-deployment-first.yaml
+- 06-deployment-second.yaml

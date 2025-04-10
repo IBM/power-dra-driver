@@ -1,0 +1,37 @@
+apiVersion: resource.k8s.io/v1alpha3
+kind: ResourceSlice
+metadata:
+  name: nx-gzip-slice-worker-0
+  namespace: power-dra-driver
+  ownerReferences:
+  - apiVersion: v1
+    kind: Node
+    name: worker-0
+    uid: 599f6e81-b968-4266-9421-9d5b1fc0a544
+spec:
+  driver: nx.device.power.ibm.com
+  nodeName: worker-0
+  pool:
+    name: worker-0
+    generation: 0
+    resourceSliceCount: 1
+  devices:
+  - name: nx-gzip-0
+    basic:
+      attributes:
+        model:
+          string: NX-GZIP-V1
+        uuid:
+          string: nx-gzip-uuid-001
+      capacity:
+        memory: "80Gi"
+  - name: nx-gzip-1
+    basic:
+      attributes:
+        model:
+          string: NX-GZIP-V2
+        uuid:
+          string: nx-gzip-uuid-002
+      capacity:
+        memory: "80Gi"
+
