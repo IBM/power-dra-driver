@@ -1,12 +1,14 @@
 module github.com/IBM/power-dra-driver
 
-go 1.23.3
+go 1.24.0
+
 toolchain go1.24.1
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/spf13/pflag v1.0.6
 	github.com/urfave/cli/v2 v2.27.6
+	github.com/urfave/cli/v3 v3.3.3
 	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
 	k8s.io/client-go v0.33.0
