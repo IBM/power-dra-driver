@@ -139,6 +139,9 @@ github.com/x448/float16
 # github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1
 ## explicit; go 1.15
 github.com/xrash/smetrics
+# go.etcd.io/etcd/client/pkg/v3 v3.5.21
+## explicit; go 1.23.0
+go.etcd.io/etcd/client/pkg/v3/fileutil
 # go.opentelemetry.io/otel v1.33.0
 ## explicit; go 1.22.0
 go.opentelemetry.io/otel/attribute
@@ -581,9 +584,10 @@ k8s.io/component-base/metrics/legacyregistry
 k8s.io/component-base/metrics/prometheus/feature
 k8s.io/component-base/metrics/prometheusextension
 k8s.io/component-base/version
-# k8s.io/dynamic-resource-allocation v0.32.3
-## explicit; go 1.23.0
+# k8s.io/dynamic-resource-allocation v0.33.0
+## explicit; go 1.24.0
 k8s.io/dynamic-resource-allocation/kubeletplugin
+k8s.io/dynamic-resource-allocation/resourceclaim
 k8s.io/dynamic-resource-allocation/resourceslice
 # k8s.io/klog/v2 v2.130.1
 ## explicit; go 1.18
@@ -609,7 +613,6 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/validation/spec
 # k8s.io/kubelet v0.33.0
 ## explicit; go 1.24.0
-k8s.io/kubelet/pkg/apis/dra/v1alpha4
 k8s.io/kubelet/pkg/apis/dra/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 # k8s.io/kubernetes v1.33.0
