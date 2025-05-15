@@ -33,7 +33,7 @@ jobs:
       - name: Setup Go 1.23.x
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.x'
+          go-version: '1.24.x'
       # Eventually we should build inline...
 
       - name: Build the binaries
