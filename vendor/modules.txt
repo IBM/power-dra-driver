@@ -623,7 +623,7 @@ k8s.io/kubernetes/pkg/kubelet/checkpointmanager/errors
 k8s.io/kubernetes/pkg/kubelet/util/store
 k8s.io/kubernetes/pkg/util/filesystem
 k8s.io/kubernetes/pkg/util/hash
-# k8s.io/utils v0.0.0-20241210054802-24370beab758
+# k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979
 ## explicit; go 1.18
 k8s.io/utils/buffer
 k8s.io/utils/clock
