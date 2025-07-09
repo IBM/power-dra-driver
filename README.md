@@ -18,6 +18,13 @@ You must have Power10 or higher logical partitions that are part of your cluster
 
 You should also be using an OpenShift Container Platform 4.19+.
 
+## Kind cluster
+
+To use the kind cluster in the power arch machine, run the script to create the kind cluster with single worker node.
+``` shell
+./dev/setup.sh
+```
+
 ## Install
 
 To install the code, use:
@@ -36,6 +43,14 @@ To uninstall the code, use:
 
 ``` shell
 helm uninstall power-dra-driver -n power-dra-driver
+```
+
+## Delete the kind cluster
+
+To delete the kind cluster created , run the script to delete it.
+
+``` shell
+./dev/teardown.sh
 ```
 
 ## License

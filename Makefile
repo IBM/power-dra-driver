@@ -76,6 +76,14 @@ $(CMD_TARGETS): cmd-%:
 		CC=$(CC) CGO_ENABLED=1 GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		go build -ldflags "-s -w -X $(CLI_VERSION_PACKAGE).gitCommit=$(GIT_COMMIT) -X $(CLI_VERSION_PACKAGE).version=$(VERSION)" $(COMMAND_BUILD_OPTIONS) $(MODULE)/cmd/$(*)
 
+.PHONY: dev-setup
+dev-setup:
+	dev/setup.sh
+
+.PHONY: dev-clean
+dev-clean:
+	dev/teardown.sh
+
 ########################################################################
 # Container Targets
 
