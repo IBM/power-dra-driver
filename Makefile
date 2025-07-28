@@ -19,9 +19,10 @@ VERSION ?= v0.1.0
 GIT_COMMIT ?= $(shell git describe --match="" --dirty --long --always --abbrev=40 2> /dev/null || echo "")
 
 # Kind configuration
-KIND_IMAGE ?= docker.io/kindest/node:latest
-ifeq ($(ARCH),"ppc64le")
+ifeq ($(ARCH),ppc64le)
   KIND_IMAGE := quay.io/powercloud/kind-node:v1.33.1
+else
+  KIND_IMAGE := docker.io/kindest/node:latest
 endif
 
 KIND_CLUSTER_NAME:="power-dra-driver-cluster"
@@ -34,14 +35,14 @@ KIND_EXPERIMENTAL_PROVIDER:="podman"
 build: fmt vet
 	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dra-kubeletplugin cmd/power-dra-kubeletplugin/*.go
 
+CONTROLLER_GEN := $(shell which controller-gen 2>/dev/null || echo "$$(go env GOPATH)/bin/controller-gen")
+
 .PHONY: controller-gen
-controller-gen: ## Download controller-gen locally if necessary.
-ifeq (, $(shell which controller-gen))
-	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0
-	CONTROLLER_GEN=$(shell go env GOPATH)/bin/controller-gen
-else
-	CONTROLLER_GEN=$(shell which controller-gen)
-endif
+controller-gen:
+    @if [ ! -x "$(CONTROLLER_GEN)" ]; then \
+        echo "Installing controller-gen..."; \
+        go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0; \
+    fi
 
 .PHONY: generate
 generate: controller-gen
