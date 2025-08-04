@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754000177
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754327153
 
 LABEL io.k8s.display-name="IBM Power DRA Driver"
 LABEL name="IBM Power DRA Driver"
