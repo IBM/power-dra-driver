@@ -9,13 +9,13 @@ require (
 	github.com/spf13/pflag v1.0.7
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/urfave/cli/v3 v3.4.1
-	k8s.io/api v0.33.3
-	k8s.io/apimachinery v0.33.3
-	k8s.io/client-go v0.33.3
-	k8s.io/component-base v0.33.3
-	k8s.io/dynamic-resource-allocation v0.33.3
+	k8s.io/api v0.33.4
+	k8s.io/apimachinery v0.33.4
+	k8s.io/client-go v0.33.4
+	k8s.io/component-base v0.33.4
+	k8s.io/dynamic-resource-allocation v0.33.4
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubelet v0.33.3
+	k8s.io/kubelet v0.33.4
 	k8s.io/kubernetes v1.33.4
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	tags.cncf.io/container-device-interface v1.0.1
