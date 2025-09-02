@@ -32,6 +32,7 @@ type grpcServer struct {
 	grpcVerbosity int
 	wg            sync.WaitGroup
 	endpoint      endpoint
+	socketpath    string
 	server        *grpc.Server
 }
 
@@ -39,10 +40,7 @@ type registerService func(s *grpc.Server)
 
 // startGRPCServer sets up the GRPC server on a Unix domain socket and spawns a goroutine
 // which handles requests for arbitrary services.
-//
-// errHandler gets invoked in the background when errors are encountered there.
-// They are fatal and should cause the process to exit.
-func startGRPCServer(logger klog.Logger, grpcVerbosity int, unaryInterceptors []grpc.UnaryServerInterceptor, streamInterceptors []grpc.StreamServerInterceptor, endpoint endpoint, errHandler func(ctx context.Context, err error), services ...registerService) (*grpcServer, error) {
+func startGRPCServer(logger klog.Logger, grpcVerbosity int, unaryInterceptors []grpc.UnaryServerInterceptor, streamInterceptors []grpc.StreamServerInterceptor, endpoint endpoint, services ...registerService) (*grpcServer, error) {
 	ctx := klog.NewContext(context.Background(), logger)
 
 	s := &grpcServer{
@@ -52,7 +50,7 @@ func startGRPCServer(logger klog.Logger, grpcVerbosity int, unaryInterceptors []
 
 	listener, err := endpoint.listen(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("listen on %q: %w", s.endpoint.path(), err)
+		return nil, fmt.Errorf("listen on %q: %w", s.socketpath, err)
 	}
 
 	// Run a gRPC server. It will close the listening socket when
@@ -81,13 +79,13 @@ func startGRPCServer(logger klog.Logger, grpcVerbosity int, unaryInterceptors []
 		defer s.wg.Done()
 		err := s.server.Serve(listener)
 		if err != nil {
-			errHandler(ctx, err)
+			logger.Error(err, "GRPC server failed")
 		} else {
-			logger.V(3).Info("GRPC server terminated gracefully", "endpoint", endpoint.path())
+			logger.V(3).Info("GRPC server terminated gracefully")
 		}
 	}()
 
-	logger.V(3).Info("GRPC server started", "endpoint", endpoint.path())
+	logger.V(3).Info("GRPC server started")
 	return s, nil
 }
 

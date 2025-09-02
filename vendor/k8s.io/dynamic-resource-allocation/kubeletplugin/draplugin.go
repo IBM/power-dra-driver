@@ -29,17 +29,13 @@ import (
 	"k8s.io/klog/v2"
 
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
-	resourceapi "k8s.io/api/resource/v1"
+	resourceapi "k8s.io/api/resource/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	cgoresource "k8s.io/client-go/kubernetes/typed/resource/v1"
-	draclient "k8s.io/dynamic-resource-allocation/client"
 	"k8s.io/dynamic-resource-allocation/resourceclaim"
 	"k8s.io/dynamic-resource-allocation/resourceslice"
-	drahealthv1alpha1 "k8s.io/kubelet/pkg/apis/dra-health/v1alpha1"
-	drapbv1 "k8s.io/kubelet/pkg/apis/dra/v1"
-	drapbv1beta1 "k8s.io/kubelet/pkg/apis/dra/v1beta1"
+	drapb "k8s.io/kubelet/pkg/apis/dra/v1beta1"
 	registerapi "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 )
 
@@ -102,12 +98,6 @@ type DRAPlugin interface {
 	// It is the responsibility of the DRA driver to cache whatever additional
 	// information it might need about prepared resources.
 	//
-	// The DRA driver cannot assume that the matching PrepareResourceClaims
-	// call was handled by the same process:
-	// - The driver might have been restarted in the meantime.
-	// - [RollingUpdate], if enabled, can lead to PrepareResourceClaims being
-	//   called in one driver instance and UnprepareResourceClaims in another.
-	//
 	// This call must be idempotent because the kubelet might have to ask
 	// for un-preparation multiple times, for example if it gets restarted.
 	// Therefore it is not an error if this gets called for a ResourceClaim
@@ -117,46 +107,9 @@ type DRAPlugin interface {
 	// and serialization.
 	//
 	// The conventions for returning one overall error and several per-ResourceClaim
-	// errors are the same as in PrepareResourceClaims. In particular, all claims
-	// must have an entry in the response, even if that entry is nil.
+	// errors are the same as in PrepareResourceClaims.
 	UnprepareResourceClaims(ctx context.Context, claims []NamespacedObject) (result map[types.UID]error, err error)
-
-	// HandleError gets called for errors encountered in the background,
-	// for example while publishing ResourceSlices.
-	// See [resourceslice.Options.ErrorHandler] for details on that.
-	//
-	// The recommended implementation is to log with
-	// runtime.HandleErrorWithContext(ctx, err, msg) (from
-	// k8s.io/apimachinery/pkg/util/runtime.HandleErrorWithContext)
-	// and then to exit the process if the error is fatal.
-	// Ideally the process should shut down gracefully, which can be
-	// achieved by canceling the main context of the DRA driver.
-	//
-	// Fatal errors can be distinguished from recoverable errors via
-	//    errors.Is(err, kubeletplugin.ErrRecoverable)
-	//
-	// This is a mandatory method because drivers should check for errors
-	// which won't get resolved by retrying and then fail or change the
-	// slices that they are trying to publish:
-	// - dropped fields (see [resourceslice.DroppedFieldsError])
-	// - validation errors (see [apierrors.IsInvalid])
-	HandleError(ctx context.Context, err error, msg string)
 }
-
-// ErrRecoverable distinguishes recoverable errors from those errors which are fatal
-// and should cause the process to exit. Use with:
-//
-//	errors.Is(err, ErrRecoverable)
-var ErrRecoverable = errors.New("recoverable error")
-
-type recoverableError struct {
-	error
-}
-
-var _ error = recoverableError{}
-
-func (err recoverableError) Is(other error) bool { return other == ErrRecoverable }
-func (err recoverableError) Unwrap() error       { return err.error }
 
 // PrepareResult contains the result of preparing one particular ResourceClaim.
 type PrepareResult struct {
@@ -213,9 +166,8 @@ func DriverName(driverName string) Option {
 	}
 }
 
-// GRPCVerbosity sets the verbosity for logging gRPC calls.
-// Default is 6, which includes gRPC calls and their responses.
-// A negative value disables logging.
+// GRPCVerbosity sets the verbosity for logging gRPC calls. Default is 4. A negative
+// value disables logging.
 func GRPCVerbosity(level int) Option {
 	return func(o *options) error {
 		o.grpcVerbosity = level
@@ -287,20 +239,7 @@ func PluginDataDirectoryPath(path string) Option {
 	}
 }
 
-// PluginSocket sets the name of the socket inside the directory where
-// the DRA driver creates the socket for the DRA gRPC calls. This is used
-// by the kubelet to connect to the DRA plugin.
-//
-// This is meant for testing. Normal DRA drivers should not use this and
-// instead rely on the automatic handling of the name.
-func PluginSocket(name string) Option {
-	return func(o *options) error {
-		o.pluginSocket = name
-		return nil
-	}
-}
-
-// PluginListener configures how to create the DRA service socket.
+// PluginListener configures how to create the registrar socket.
 // The default is to remove the file if it exists and to then
 // create a socket.
 //
@@ -381,18 +320,6 @@ func NodeV1beta1(enabled bool) Option {
 	}
 }
 
-// NodeV1 explicitly chooses whether the DRA gRPC API v1
-// gets enabled. True by default.
-//
-// This is used in Kubernetes for end-to-end testing. The default should
-// be fine for DRA drivers.
-func NodeV1(enabled bool) Option {
-	return func(o *options) error {
-		o.nodeV1 = enabled
-		return nil
-	}
-}
-
 // KubeClient grants the plugin access to the API server. This is needed
 // for syncing ResourceSlice objects. It's the responsibility of the DRA driver
 // developer to ensure that this client has permission to read, write,
@@ -448,26 +375,6 @@ func FlockDirectoryPath(path string) Option {
 	}
 }
 
-// RegistrationService controls whether the kubelet plugin gRPC service
-// is started. It's on by default. This is meant for testing, normal
-// DRA drivers should use the default.
-func RegistrationService(enabled bool) Option {
-	return func(o *options) error {
-		o.registrationService = enabled
-		return nil
-	}
-}
-
-// DRAService controls whether the DRA gRPC service
-// is started. It's on by default. This is meant for testing, normal
-// DRA drivers should use the default.
-func DRAService(enabled bool) Option {
-	return func(o *options) error {
-		o.draService = enabled
-		return nil
-	}
-}
-
 type options struct {
 	logger                     klog.Logger
 	grpcVerbosity              int
@@ -475,8 +382,7 @@ type options struct {
 	nodeName                   string
 	nodeUID                    types.UID
 	pluginRegistrationEndpoint endpoint
-	pluginDataDirectoryPath    string // The directory where the plugin socket is created.
-	pluginSocket               string // The socket name for the DRA gRPC service.
+	pluginDataDirectoryPath    string
 	rollingUpdateUID           types.UID
 	draEndpointListen          func(ctx context.Context, path string) (net.Listener, error)
 	unaryInterceptors          []grpc.UnaryServerInterceptor
@@ -485,10 +391,6 @@ type options struct {
 	serialize                  bool
 	flockDirectoryPath         string
 	nodeV1beta1                bool
-	nodeV1                     bool
-	registrationService        bool
-	draService                 bool
-	healthService              *bool
 }
 
 // Helper combines the kubelet registration service and the DRA node plugin
@@ -506,7 +408,6 @@ type Helper struct {
 	nodeName         string
 	nodeUID          types.UID
 	kubeClient       kubernetes.Interface
-	resourceClient   cgoresource.ResourceV1Interface
 	serialize        bool
 	grpcMutex        sync.Mutex
 	grpcLockFilePath string
@@ -518,17 +419,15 @@ type Helper struct {
 	resourceSliceController *resourceslice.Controller
 }
 
-// Start sets up all enabled gRPC servers (by default, one for registration,
-// one for the DRA node client) and implements them by calling a [DRAPlugin]
-// implementation.
+// Start sets up two gRPC servers (one for registration, one for the DRA node
+// client) and implements them by calling a [DRAPlugin] implementation.
 //
 // The context and/or DRAPlugin.Stop can be used to stop all background activity.
 // Stop also blocks. A logger can be stored in the context to add values or
 // a name to all log entries.
 //
-// [KubeClient] and [DriverName] options are mandatory.
-// If the plugin will be used to publish resources, [NodeName]
-// is also mandatory.
+// If the plugin will be used to publish resources, [KubeClient] and [NodeName]
+// options are mandatory. Otherwise only [DriverName] is mandatory.
 func Start(ctx context.Context, plugin DRAPlugin, opts ...Option) (result *Helper, finalErr error) {
 	logger := klog.FromContext(ctx)
 	o := options{
@@ -536,12 +435,9 @@ func Start(ctx context.Context, plugin DRAPlugin, opts ...Option) (result *Helpe
 		grpcVerbosity: 6, // Logs requests and responses, which can be large.
 		serialize:     true,
 		nodeV1beta1:   true,
-		nodeV1:        true,
 		pluginRegistrationEndpoint: endpoint{
 			dir: KubeletRegistryDir,
 		},
-		draService:          true,
-		registrationService: true,
 	}
 	for _, option := range opts {
 		if err := option(&o); err != nil {
@@ -551,9 +447,6 @@ func Start(ctx context.Context, plugin DRAPlugin, opts ...Option) (result *Helpe
 
 	if o.driverName == "" {
 		return nil, errors.New("driver name must be set")
-	}
-	if o.kubeClient == nil {
-		return nil, errors.New("Kubernetes client must be set")
 	}
 	if o.rollingUpdateUID != "" && o.pluginRegistrationEndpoint.file != "" {
 		return nil, errors.New("rolling updates and explicit registration socket filename are mutually exclusive")
@@ -568,18 +461,14 @@ func Start(ctx context.Context, plugin DRAPlugin, opts ...Option) (result *Helpe
 	if o.pluginDataDirectoryPath == "" {
 		o.pluginDataDirectoryPath = path.Join(KubeletPluginsDir, o.driverName)
 	}
-	if o.pluginSocket == "" {
-		o.pluginSocket = "dra" + uidPart + ".sock" // "dra" is hard-coded. The directory is unique, so we get a unique full path also without the UID.
-	}
 
 	d := &Helper{
-		driverName:     o.driverName,
-		nodeName:       o.nodeName,
-		nodeUID:        o.nodeUID,
-		kubeClient:     o.kubeClient,
-		resourceClient: draclient.New(o.kubeClient),
-		serialize:      o.serialize,
-		plugin:         plugin,
+		driverName: o.driverName,
+		nodeName:   o.nodeName,
+		nodeUID:    o.nodeUID,
+		kubeClient: o.kubeClient,
+		serialize:  o.serialize,
+		plugin:     plugin,
 	}
 	if o.rollingUpdateUID != "" {
 		dir := o.pluginDataDirectoryPath
@@ -613,84 +502,34 @@ func Start(ctx context.Context, plugin DRAPlugin, opts ...Option) (result *Helpe
 		}
 	}()
 
+	// Run the node plugin gRPC server first to ensure that it is ready.
 	var supportedServices []string
-	if o.nodeV1 {
-		supportedServices = append(supportedServices, drapbv1.DRAPluginService)
+	draEndpoint := endpoint{
+		dir:        o.pluginDataDirectoryPath,
+		file:       "dra" + uidPart + ".sock", // "dra" is hard-coded. The directory is unique, so we get a unique full path also without the UID.
+		listenFunc: o.draEndpointListen,
 	}
-	if o.nodeV1beta1 {
-		supportedServices = append(supportedServices, drapbv1beta1.DRAPluginService)
+	pluginServer, err := startGRPCServer(klog.LoggerWithName(logger, "dra"), o.grpcVerbosity, o.unaryInterceptors, o.streamInterceptors, draEndpoint, func(grpcServer *grpc.Server) {
+		if o.nodeV1beta1 {
+			logger.V(5).Info("registering v1beta1.DRAPlugin gRPC service")
+			drapb.RegisterDRAPluginServer(grpcServer, &nodePluginImplementation{Helper: d})
+			supportedServices = append(supportedServices, drapb.DRAPluginService)
+		}
+	})
+	if err != nil {
+		return nil, fmt.Errorf("start node client: %v", err)
 	}
-	// Check if the plugin implements the DRAResourceHealth service.
-	if _, ok := plugin.(drahealthv1alpha1.DRAResourceHealthServer); ok {
-		// If it does, add it to the list of services this plugin supports.
-		logger.V(5).Info("detected v1alpha1.DRAResourceHealth gRPC service")
-		supportedServices = append(supportedServices, drahealthv1alpha1.DRAResourceHealth_ServiceDesc.ServiceName)
-	}
+	d.pluginServer = pluginServer
 	if len(supportedServices) == 0 {
 		return nil, errors.New("no supported DRA gRPC API is implemented and enabled")
 	}
-	draEndpoint := endpoint{
-		dir:        o.pluginDataDirectoryPath,
-		file:       o.pluginSocket,
-		listenFunc: o.draEndpointListen,
+
+	// Now make it available to kubelet.
+	registrar, err := startRegistrar(klog.LoggerWithName(logger, "registrar"), o.grpcVerbosity, o.unaryInterceptors, o.streamInterceptors, o.driverName, supportedServices, draEndpoint.path(), o.pluginRegistrationEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("start registrar: %v", err)
 	}
-
-	if o.draService {
-		// Run the node plugin gRPC server first to ensure that it is ready.
-		pluginServer, err := startGRPCServer(
-			klog.LoggerWithName(logger, "dra"),
-			o.grpcVerbosity,
-			o.unaryInterceptors,
-			o.streamInterceptors,
-			draEndpoint,
-			func(ctx context.Context, err error) { // This error handler is REQUIRED
-				plugin.HandleError(ctx, err, "DRA gRPC server failed")
-			},
-			func(grpcServer *grpc.Server) {
-				if o.nodeV1 {
-					logger.V(5).Info("registering v1.DRAPlugin gRPC service")
-					drapbv1.RegisterDRAPluginServer(grpcServer, &nodePluginImplementation{Helper: d})
-				}
-
-				if o.nodeV1beta1 {
-					logger.V(5).Info("registering v1beta1.DRAPlugin gRPC service")
-					drapbv1beta1.RegisterDRAPluginServer(grpcServer, drapbv1beta1.V1ServerWrapper{DRAPluginServer: &nodePluginImplementation{Helper: d}})
-				}
-
-				if heatlhServer, ok := d.plugin.(drahealthv1alpha1.DRAResourceHealthServer); ok {
-					if o.healthService == nil || *o.healthService {
-						logger.V(5).Info("registering v1alpha1.DRAResourceHealth gRPC service")
-						drahealthv1alpha1.RegisterDRAResourceHealthServer(grpcServer, heatlhServer)
-					}
-				}
-			},
-		)
-		if err != nil {
-			return nil, fmt.Errorf("start DRA service: %w", err)
-		}
-		d.pluginServer = pluginServer
-	}
-
-	if o.registrationService {
-		// Now make it available to kubelet.
-		registrar, err := startRegistrar(
-			klog.LoggerWithName(logger, "registrar"),
-			o.grpcVerbosity,
-			o.unaryInterceptors,
-			o.streamInterceptors,
-			o.driverName,
-			supportedServices,
-			draEndpoint.path(),
-			o.pluginRegistrationEndpoint,
-			func(ctx context.Context, err error) {
-				plugin.HandleError(ctx, err, "registrar gRPC server failed")
-			},
-		)
-		if err != nil {
-			return nil, fmt.Errorf("start registrar: %w", err)
-		}
-		d.registrar = registrar
-	}
+	d.registrar = registrar
 
 	// startGRPCServer and startRegistrar don't implement cancellation
 	// themselves, we add that for both here.
@@ -743,6 +582,9 @@ func (d *Helper) Stop() {
 //
 // The caller may modify the resources after this call returns.
 func (d *Helper) PublishResources(_ context.Context, resources resourceslice.DriverResources) error {
+	if d.kubeClient == nil {
+		return errors.New("no KubeClient found to publish resources")
+	}
 	if d.nodeName == "" {
 		return errors.New("no NodeName was set to publish resources")
 	}
@@ -765,6 +607,11 @@ func (d *Helper) PublishResources(_ context.Context, resources resourceslice.Dri
 		// our background context, not the one passed into this
 		// function, and thus is connected to the lifecycle of the
 		// plugin.
+		//
+		// TODO: don't delete ResourceSlices, not even on a clean shutdown.
+		// We either support rolling updates and want to hand over seamlessly
+		// or don't and then perhaps restart the pod quickly enough that
+		// the kubelet hasn't deleted ResourceSlices yet.
 		controllerCtx := d.backgroundCtx
 		controllerLogger := klog.FromContext(controllerCtx)
 		controllerLogger = klog.LoggerWithName(controllerLogger, "ResourceSlice controller")
@@ -776,20 +623,14 @@ func (d *Helper) PublishResources(_ context.Context, resources resourceslice.Dri
 				KubeClient: d.kubeClient,
 				Owner:      &owner,
 				Resources:  driverResources,
-				ErrorHandler: func(ctx context.Context, err error, msg string) {
-					// ResourceSlice publishing errors like dropped fields or
-					// invalid spec are not going to get resolved by retrying,
-					// but neither is restarting the process going to help
-					// -> all errors are recoverable.
-					d.plugin.HandleError(ctx, recoverableError{error: err}, msg)
-				},
 			}); err != nil {
 			return fmt.Errorf("start ResourceSlice controller: %w", err)
 		}
-	} else {
-		// Inform running controller about new information.
-		d.resourceSliceController.Update(driverResources)
+		return nil
 	}
+
+	// Inform running controller about new information.
+	d.resourceSliceController.Update(driverResources)
 
 	return nil
 }
@@ -801,13 +642,6 @@ func (d *Helper) RegistrationStatus() *registerapi.RegistrationStatus {
 	}
 	// TODO: protect against concurrency issues.
 	return d.registrar.status
-}
-
-// SetGetInfoError configures the registration server to make
-// GetInfo calls return the specified error.
-// To restore normal behavior, call SetGetInfoError(nil).
-func (d *Helper) SetGetInfoError(err error) {
-	d.registrar.setGetInfoError(err)
 }
 
 // serializeGRPCIfEnabled locks a mutex if serialization is enabled.
@@ -840,8 +674,8 @@ type nodePluginImplementation struct {
 	*Helper
 }
 
-// NodePrepareResources implements [drapbv1.NodePrepareResources].
-func (d *nodePluginImplementation) NodePrepareResources(ctx context.Context, req *drapbv1.NodePrepareResourcesRequest) (*drapbv1.NodePrepareResourcesResponse, error) {
+// NodePrepareResources implements [drapb.NodePrepareResources].
+func (d *nodePluginImplementation) NodePrepareResources(ctx context.Context, req *drapb.NodePrepareResourcesRequest) (*drapb.NodePrepareResourcesResponse, error) {
 	// Do slow API calls before serializing.
 	claims, err := d.getResourceClaims(ctx, req.Claims)
 	if err != nil {
@@ -859,11 +693,11 @@ func (d *nodePluginImplementation) NodePrepareResources(ctx context.Context, req
 		return nil, fmt.Errorf("prepare resource claims: %w", err)
 	}
 
-	resp := &drapbv1.NodePrepareResourcesResponse{Claims: map[string]*drapbv1.NodePrepareResourceResponse{}}
+	resp := &drapb.NodePrepareResourcesResponse{Claims: map[string]*drapb.NodePrepareResourceResponse{}}
 	for uid, claimResult := range result {
-		var devices []*drapbv1.Device
+		var devices []*drapb.Device
 		for _, result := range claimResult.Devices {
-			device := &drapbv1.Device{
+			device := &drapb.Device{
 				RequestNames: stripSubrequestNames(result.Requests),
 				PoolName:     result.PoolName,
 				DeviceName:   result.DeviceName,
@@ -871,7 +705,7 @@ func (d *nodePluginImplementation) NodePrepareResources(ctx context.Context, req
 			}
 			devices = append(devices, device)
 		}
-		resp.Claims[string(uid)] = &drapbv1.NodePrepareResourceResponse{
+		resp.Claims[string(uid)] = &drapb.NodePrepareResourceResponse{
 			Error:   errorString(claimResult.Err),
 			Devices: devices,
 		}
@@ -894,10 +728,10 @@ func stripSubrequestNames(names []string) []string {
 	return stripped
 }
 
-func (d *nodePluginImplementation) getResourceClaims(ctx context.Context, claims []*drapbv1.Claim) ([]*resourceapi.ResourceClaim, error) {
+func (d *nodePluginImplementation) getResourceClaims(ctx context.Context, claims []*drapb.Claim) ([]*resourceapi.ResourceClaim, error) {
 	var resourceClaims []*resourceapi.ResourceClaim
 	for _, claimReq := range claims {
-		claim, err := d.resourceClient.ResourceClaims(claimReq.Namespace).Get(ctx, claimReq.Name, metav1.GetOptions{})
+		claim, err := d.kubeClient.ResourceV1beta1().ResourceClaims(claimReq.Namespace).Get(ctx, claimReq.Name, metav1.GetOptions{})
 		if err != nil {
 			return resourceClaims, fmt.Errorf("retrieve claim %s/%s: %w", claimReq.Namespace, claimReq.Name, err)
 		}
@@ -913,7 +747,7 @@ func (d *nodePluginImplementation) getResourceClaims(ctx context.Context, claims
 }
 
 // NodeUnprepareResources implements [draapi.NodeUnprepareResources].
-func (d *nodePluginImplementation) NodeUnprepareResources(ctx context.Context, req *drapbv1.NodeUnprepareResourcesRequest) (*drapbv1.NodeUnprepareResourcesResponse, error) {
+func (d *nodePluginImplementation) NodeUnprepareResources(ctx context.Context, req *drapb.NodeUnprepareResourcesRequest) (*drapb.NodeUnprepareResourcesResponse, error) {
 	unlock, err := d.serializeGRPCIfEnabled()
 	if err != nil {
 		return nil, fmt.Errorf("serialize gRPC: %w", err)
@@ -929,9 +763,9 @@ func (d *nodePluginImplementation) NodeUnprepareResources(ctx context.Context, r
 		return nil, fmt.Errorf("unprepare resource claims: %w", err)
 	}
 
-	resp := &drapbv1.NodeUnprepareResourcesResponse{Claims: map[string]*drapbv1.NodeUnprepareResourceResponse{}}
+	resp := &drapb.NodeUnprepareResourcesResponse{Claims: map[string]*drapb.NodeUnprepareResourceResponse{}}
 	for uid, err := range result {
-		resp.Claims[string(uid)] = &drapbv1.NodeUnprepareResourceResponse{
+		resp.Claims[string(uid)] = &drapb.NodeUnprepareResourceResponse{
 			Error: errorString(err),
 		}
 	}

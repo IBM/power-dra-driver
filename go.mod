@@ -13,7 +13,7 @@ require (
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 	k8s.io/component-base v0.34.0
-	k8s.io/dynamic-resource-allocation v0.34.0
+	k8s.io/dynamic-resource-allocation v0.33.4
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubelet v0.34.0
 	k8s.io/kubernetes v1.33.4
@@ -59,7 +59,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.6.4 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
