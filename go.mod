@@ -6,7 +6,7 @@ toolchain go1.24.6
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/spf13/pflag v1.0.9
+	github.com/spf13/pflag v1.0.10
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/urfave/cli/v3 v3.4.1
 	k8s.io/api v0.33.4
