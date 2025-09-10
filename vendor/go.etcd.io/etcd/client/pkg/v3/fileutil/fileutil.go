@@ -17,18 +17,16 @@ package fileutil
 import (
 	"fmt"
 	"io"
-	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"go.uber.org/zap"
-
-	"go.etcd.io/etcd/client/pkg/v3/verify"
 )
 
 const (
 	// PrivateFileMode grants owner to read/write a file.
-	PrivateFileMode = 0o600
+	PrivateFileMode = 0600
 )
 
 // IsDirWriteable checks if dir is writable by writing and removing a file
@@ -38,7 +36,7 @@ func IsDirWriteable(dir string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(f, []byte(""), PrivateFileMode); err != nil {
+	if err := ioutil.WriteFile(f, []byte(""), PrivateFileMode); err != nil {
 		return err
 	}
 	return os.Remove(f)
@@ -47,9 +45,8 @@ func IsDirWriteable(dir string) error {
 // TouchDirAll is similar to os.MkdirAll. It creates directories with 0700 permission if any directory
 // does not exists. TouchDirAll also ensures the given directory is writable.
 func TouchDirAll(lg *zap.Logger, dir string) error {
-	verify.Assert(lg != nil, "nil log isn't allowed")
 	// If path is already a directory, MkdirAll does nothing and returns nil, so,
-	// first check if dir exists with an expected permission mode.
+	// first check if dir exist with an expected permission mode.
 	if Exist(dir) {
 		err := CheckDirPermission(dir, PrivateDirMode)
 		if err != nil {
@@ -125,7 +122,7 @@ func CheckDirPermission(dir string, perm os.FileMode) error {
 	if !Exist(dir) {
 		return fmt.Errorf("directory %q empty, cannot check permission", dir)
 	}
-	// check the existing permission on the directory
+	//check the existing permission on the directory
 	dirInfo, err := os.Stat(dir)
 	if err != nil {
 		return err
@@ -160,6 +157,7 @@ func RemoveMatchFile(lg *zap.Logger, dir string, matchFunc func(fileName string)
 				lg.Error("remove file failed",
 					zap.String("file", file),
 					zap.Error(err))
+				continue
 			}
 		}
 	}
@@ -167,17 +165,4 @@ func RemoveMatchFile(lg *zap.Logger, dir string, matchFunc func(fileName string)
 		return fmt.Errorf("remove file(s) %v error", removeFailedFiles)
 	}
 	return nil
-}
-
-// ListFiles lists files if matchFunc is true on an existing dir
-// Returns error if the dir does not exist
-func ListFiles(dir string, matchFunc func(fileName string) bool) ([]string, error) {
-	var files []string
-	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-		if matchFunc(path) {
-			files = append(files, path)
-		}
-		return nil
-	})
-	return files, err
 }
