@@ -13,7 +13,7 @@ require (
 	k8s.io/component-base v0.33.5
 	k8s.io/dynamic-resource-allocation v0.33.4
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubelet v0.33.4
+	k8s.io/kubelet v0.33.5
 	k8s.io/kubernetes v1.33.4
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d
 	tags.cncf.io/container-device-interface v1.0.1
