@@ -13,6 +13,7 @@ image:
   pullPolicy: IfNotPresent
   # Always if you are debugging
   # Overrides the image tag whose default is the chart appVersion.
+  # use v4.20.0 to test a specific version
   tag: "main"
 
 serviceAccount:

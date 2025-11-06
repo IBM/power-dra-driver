@@ -10,7 +10,8 @@ import (
 	"fmt"
 	"maps"
 
-	resourceapi "k8s.io/api/resource/v1beta1"
+	resourcev1 "k8s.io/api/resource/v1"
+	resourcev1beta1 "k8s.io/api/resource/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	coreclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/dynamic-resource-allocation/kubeletplugin"
@@ -49,9 +50,12 @@ func NewDriver(ctx context.Context, config *Config) (*driver, error) {
 	}
 	driver.helper = helper
 
-	devices := make([]resourceapi.Device, 0, len(state.allocatable))
+	devices := make([]resourcev1.Device, 0, len(state.allocatable))
 	for device := range maps.Values(state.allocatable) {
-		devices = append(devices, device)
+		v1Device := resourcev1.Device{
+			Name: device.Name,
+		}
+		devices = append(devices, v1Device)
 	}
 	resources := resourceslice.DriverResources{
 		Pools: map[string]resourceslice.Pool{
@@ -77,7 +81,7 @@ func (d *driver) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (d *driver) PrepareResourceClaims(ctx context.Context, claims []*resourceapi.ResourceClaim) (map[types.UID]kubeletplugin.PrepareResult, error) {
+func (d *driver) PrepareResourceClaims(ctx context.Context, claims []*resourcev1.ResourceClaim) (map[types.UID]kubeletplugin.PrepareResult, error) {
 	klog.Infof("PrepareResourceClaims is called: number of claims: %d", len(claims))
 	result := make(map[types.UID]kubeletplugin.PrepareResult)
 
@@ -89,8 +93,14 @@ func (d *driver) PrepareResourceClaims(ctx context.Context, claims []*resourceap
 	return result, nil
 }
 
-func (d *driver) prepareResourceClaim(_ context.Context, claim *resourceapi.ResourceClaim) kubeletplugin.PrepareResult {
-	preparedPBs, err := d.state.Prepare(claim)
+func (d *driver) prepareResourceClaim(_ context.Context, claim *resourcev1.ResourceClaim) kubeletplugin.PrepareResult {
+	// Convert v1.ResourceClaim to v1beta1.ResourceClaim for internal state management
+	v1beta1Claim := &resourcev1beta1.ResourceClaim{
+		ObjectMeta: claim.ObjectMeta,
+		Spec:       resourcev1beta1.ResourceClaimSpec{},
+	}
+
+	preparedPBs, err := d.state.Prepare(v1beta1Claim)
 	if err != nil {
 		return kubeletplugin.PrepareResult{
 			Err: fmt.Errorf("error preparing devices for claim %v: %w", claim.UID, err),
@@ -129,4 +139,8 @@ func (d *driver) unprepareResourceClaim(_ context.Context, claim kubeletplugin.N
 	}
 
 	return nil
+}
+
+func (d *driver) HandleError(ctx context.Context, err error, claimUID string) {
+	klog.ErrorS(err, "Error handling resource claim", "claimUID", claimUID)
 }
