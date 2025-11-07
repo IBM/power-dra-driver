@@ -3,26 +3,26 @@ ARCH ?= ppc64le
 
 REGISTRY ?= quay.io/powercloud
 REPOSITORY ?= power-dra-driver
-TAG ?= v0.1.0
+TAG ?= v0.1.1
 
 CONTAINER_RUNTIME ?= $(shell command -v podman 2> /dev/null || echo docker)
 
-GOLANG_VERSION ?= 1.23.1
+GOLANG_VERSION ?= 1.24.0
 
 DRIVER_NAME := power-dra-driver
 MODULE := github.com/IBM/$(DRIVER_NAME)
 
 REGISTRY ?= quay.io/powercloud/power-dra-driver
 
-VERSION ?= v0.1.0
+VERSION ?= v0.1.1
 
 GIT_COMMIT ?= $(shell git describe --match="" --dirty --long --always --abbrev=40 2> /dev/null || echo "")
 
 # Kind configuration
 ifeq ($(ARCH),ppc64le)
-	KIND_IMAGE := quay.io/powercloud/kind-node:v1.33.1
+	KIND_IMAGE := quay.io/powercloud/kind-node:v1.34.1
 else
-	KIND_IMAGE := docker.io/kindest/node:v1.33.1
+	KIND_IMAGE := docker.io/kindest/node:v1.34.1
 endif
 
 KIND_CLUSTER_NAME:="power-dra-driver-cluster"
