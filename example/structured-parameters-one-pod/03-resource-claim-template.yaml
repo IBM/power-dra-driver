@@ -9,6 +9,7 @@ spec:
     devices:
       requests:
       - name: crypto-nx-gzip
-        allocationMode: "ExactCount"
-        deviceClassName: nx.device.power.ibm.com
-        count: 1
+        exactly:
+          deviceClassName: nx.device.power.ibm.com
+          allocationMode: ExactCount
+          count: 1

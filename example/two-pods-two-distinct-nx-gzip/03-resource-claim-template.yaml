@@ -8,8 +8,10 @@ spec:
   spec:
     devices:
       requests:
-      - name: nxgzip0
-        deviceClassName: nx.device.power.ibm.com
+      - name: gpu
+        exactly:
+          deviceClassName: nx.device.power.ibm.com
+          allocationMode: All
 ---
 apiVersion: resource.k8s.io/v1
 kind: ResourceClaimTemplate
@@ -20,5 +22,7 @@ spec:
   spec:
     devices:
       requests:
-      - name: nxgzip1
-        deviceClassName: nx.device.power.ibm.com
+      - name: gpu
+        exactly:
+          deviceClassName: nx.device.power.ibm.com
+          allocationMode: All
