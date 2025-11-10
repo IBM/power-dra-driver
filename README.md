@@ -68,6 +68,14 @@ To delete the kind cluster created , run the script to delete it.
 ARCH=arm64 make dev-teardown
 ```
 
+## Trouble
+
+To get the logs for the driver, use:
+
+``` shell
+oc logs -n power-dra-driver -l app.kubernetes.io/name=power-dra-driver
+```
+
 ## License
 
 All source files must include a Copyright and License header. The SPDX license header is 
