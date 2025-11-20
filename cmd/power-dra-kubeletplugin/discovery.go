@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	resourceapi "k8s.io/api/resource/v1beta1"
+	resourceapi "k8s.io/api/resource/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
@@ -29,16 +29,14 @@ func enumerateAllPossibleDevices(numNx int) (AllocatableDevices, error) {
 	// prepopulate with a single nx-gzip
 	device := resourceapi.Device{
 		Name: "cryptonxgzip",
-		Basic: &resourceapi.BasicDevice{
-			Attributes: map[resourceapi.QualifiedName]resourceapi.DeviceAttribute{
-				"index": {
-					IntValue: ptr.To(int64(0)),
-				},
+		Attributes: map[resourceapi.QualifiedName]resourceapi.DeviceAttribute{
+			"index": {
+				IntValue: ptr.To(int64(0)),
 			},
-			Capacity: map[resourceapi.QualifiedName]resourceapi.DeviceCapacity{
-				"nxgzip": {
-					Value: resource.MustParse(strconv.Itoa(numNx)),
-				},
+		},
+		Capacity: map[resourceapi.QualifiedName]resourceapi.DeviceCapacity{
+			"nxgzip": {
+				Value: resource.MustParse(strconv.Itoa(numNx)),
 			},
 		},
 	}

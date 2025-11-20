@@ -11,7 +11,6 @@ import (
 	"maps"
 
 	resourcev1 "k8s.io/api/resource/v1"
-	resourcev1beta1 "k8s.io/api/resource/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	coreclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/dynamic-resource-allocation/kubeletplugin"
@@ -94,14 +93,24 @@ func (d *driver) PrepareResourceClaims(ctx context.Context, claims []*resourcev1
 }
 
 func (d *driver) prepareResourceClaim(_ context.Context, claim *resourcev1.ResourceClaim) kubeletplugin.PrepareResult {
-	// Convert v1.ResourceClaim to v1beta1.ResourceClaim for internal state management
-	v1beta1Claim := &resourcev1beta1.ResourceClaim{
-		ObjectMeta: claim.ObjectMeta,
-		Spec:       resourcev1beta1.ResourceClaimSpec{},
+	klog.Infof("prepareResourceClaim called for claim: UID=%v, Name=%v/%v", claim.UID, claim.Namespace, claim.Name)
+
+	// Log allocation status details
+	if claim.Status.Allocation != nil {
+		klog.Infof("Claim has allocation with %d device results", len(claim.Status.Allocation.Devices.Results))
+
+		// Log each device result for debugging
+		for i, result := range claim.Status.Allocation.Devices.Results {
+			klog.Infof("Device result %d: Request=%v, Driver=%v, Pool=%v, Device=%v",
+				i, result.Request, result.Driver, result.Pool, result.Device)
+		}
+	} else {
+		klog.Warningf("Claim %v has no allocation status", claim.UID)
 	}
 
-	preparedPBs, err := d.state.Prepare(v1beta1Claim)
+	preparedPBs, err := d.state.Prepare(claim)
 	if err != nil {
+		klog.Errorf("Failed to prepare devices for claim %v: %v", claim.UID, err)
 		return kubeletplugin.PrepareResult{
 			Err: fmt.Errorf("error preparing devices for claim %v: %w", claim.UID, err),
 		}

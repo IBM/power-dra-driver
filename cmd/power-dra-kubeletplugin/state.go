@@ -10,10 +10,10 @@ import (
 	"slices"
 	"sync"
 
-	resourceapi "k8s.io/api/resource/v1beta1"
+	resourceapi "k8s.io/api/resource/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
-	drapbv1 "k8s.io/kubelet/pkg/apis/dra/v1beta1"
+	drapbv1 "k8s.io/kubelet/pkg/apis/dra/v1"
 	"k8s.io/kubernetes/pkg/kubelet/checkpointmanager"
 
 	configapi "github.com/IBM/power-dra-driver/api/nx.device.power.ibm.com/resource/nx/v1alpha1"
@@ -165,9 +165,15 @@ func (s *DeviceState) Unprepare(claimUID string) error {
 }
 
 func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (PreparedDevices, error) {
+	klog.Infof("prepareDevices called for claim UID: %v, Name: %v/%v", claim.UID, claim.Namespace, claim.Name)
+
 	if claim.Status.Allocation == nil {
+		klog.Errorf("Claim %v has no allocation status", claim.UID)
 		return nil, fmt.Errorf("claim not yet allocated")
 	}
+
+	klog.Infof("Claim allocation found. Number of results: %d", len(claim.Status.Allocation.Devices.Results))
+	klog.Infof("Available allocatable devices: %v", s.allocatable)
 
 	// Retrieve the full set of device configs for the driver.
 	configs, err := GetOpaqueDeviceConfigs(
@@ -176,8 +182,11 @@ func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (Prepared
 		claim.Status.Allocation.Devices.Config,
 	)
 	if err != nil {
+		klog.Errorf("Failed to get opaque device configs: %v", err)
 		return nil, fmt.Errorf("error getting opaque device configs: %v", err)
 	}
+
+	klog.Infof("Retrieved %d device configs", len(configs))
 
 	// Add the default Nx Config to the front of the config list with the
 	// lowest precedence. This guarantees there will be at least one config in
@@ -190,9 +199,11 @@ func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (Prepared
 	// Look through the configs and figure out which one will be applied to
 	// each device allocation result based on their order of precedence.
 	configResultsMap := make(map[runtime.Object][]*resourceapi.DeviceRequestAllocationResult)
-	for _, result := range claim.Status.Allocation.Devices.Results {
+	for i, result := range claim.Status.Allocation.Devices.Results {
+		klog.Infof("Processing allocation result %d: Device=%v, Pool=%v, Request=%v", i, result.Device, result.Pool, result.Request)
 		if _, exists := s.allocatable[result.Device]; !exists {
-			return nil, fmt.Errorf("requested Nx is not allocatable: %v", result.Device)
+			klog.Errorf("Device %v not found in allocatable devices. Available devices: %v", result.Device, s.allocatable)
+			return nil, fmt.Errorf("requested Nx is not allocatable: %v (available devices: %v)", result.Device, s.allocatable)
 		}
 		for _, c := range slices.Backward(configs) {
 			if len(c.Requests) == 0 || slices.Contains(c.Requests, result.Request) {
@@ -202,33 +213,40 @@ func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (Prepared
 		}
 	}
 
+	klog.Infof("Built config results map with %d entries", len(configResultsMap))
+
 	// Normalize, validate, and apply all configs associated with devices that
 	// need to be prepared. Track container edits generated from applying the
 	// config to the set of device allocation results.
 	perDeviceCDIContainerEdits := make(PerDeviceCDIContainerEdits)
 	for c, results := range configResultsMap {
+		klog.Infof("Processing config for %d results", len(results))
 		// Cast the opaque config to a NxConfig
 		var config *configapi.NxConfig
 		switch castConfig := c.(type) {
 		case *configapi.NxConfig:
 			config = castConfig
 		default:
+			klog.Errorf("Runtime object is not a recognized configuration type: %T", c)
 			return nil, fmt.Errorf("runtime object is not a regognized configuration")
 		}
 
 		// Normalize the config to set any implied defaults.
 		if err := config.Normalize(); err != nil {
+			klog.Errorf("Failed to normalize Nx config: %v", err)
 			return nil, fmt.Errorf("error normalizing Nx config: %w", err)
 		}
 
 		// Validate the config to ensure its integrity.
 		if err := config.Validate(); err != nil {
+			klog.Errorf("Failed to validate Nx config: %v", err)
 			return nil, fmt.Errorf("error validating Nx config: %w", err)
 		}
 
 		// Apply the config to the list of results associated with it.
 		containerEdits, err := s.applyConfig(config, results)
 		if err != nil {
+			klog.Errorf("Failed to apply Nx config: %v", err)
 			return nil, fmt.Errorf("error applying Nx config: %w", err)
 		}
 
@@ -243,12 +261,16 @@ func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (Prepared
 	var preparedDevices PreparedDevices
 	for _, results := range configResultsMap {
 		for _, result := range results {
+			cdiDeviceIDs := s.cdi.GetClaimDevices(string(claim.UID), []string{result.Device})
+			klog.Infof("Creating prepared device: Device=%v, Pool=%v, Request=%v, CDIDeviceIDs=%v",
+				result.Device, result.Pool, result.Request, cdiDeviceIDs)
+
 			device := &PreparedDevice{
 				Device: drapbv1.Device{
 					RequestNames: []string{result.Request},
 					PoolName:     result.Pool,
 					DeviceName:   result.Device,
-					CDIDeviceIDs: s.cdi.GetClaimDevices(string(claim.UID), []string{result.Device}),
+					CDIDeviceIDs: cdiDeviceIDs,
 				},
 				ContainerEdits: perDeviceCDIContainerEdits[result.Device],
 			}
@@ -257,6 +279,7 @@ func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (Prepared
 		}
 	}
 
+	klog.Infof("Successfully prepared %d devices for claim %v", len(preparedDevices), claim.UID)
 	return preparedDevices, nil
 }
 
