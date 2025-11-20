@@ -33,7 +33,7 @@ KIND_EXPERIMENTAL_PROVIDER:="podman"
 # Go Targets
 .PHONY: build
 build: fmt vet
-	GOOS=linux GOARCH=$(ARCH) go build -o bin/power-dra-kubeletplugin cmd/power-dra-kubeletplugin/*.go
+	GOOS=linux GOARCH=$(ARCH) go build -ldflags "-s -w -X $(MODULE)/internal/info.gitCommit=$(GIT_COMMIT) -X $(MODULE)/internal/info.version=$(VERSION)" -o bin/power-dra-kubeletplugin cmd/power-dra-kubeletplugin/*.go
 
 CONTROLLER_GEN := $(shell which controller-gen 2>/dev/null || echo "$$(go env GOPATH)/bin/controller-gen")
 

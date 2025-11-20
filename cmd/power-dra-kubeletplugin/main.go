@@ -17,6 +17,7 @@ import (
 	coreclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
+	"github.com/IBM/power-dra-driver/internal/info"
 	"github.com/IBM/power-dra-driver/pkg/flags"
 )
 
@@ -89,7 +90,11 @@ func newApp() *cli.App {
 			if c.Args().Len() > 0 {
 				return fmt.Errorf("arguments not supported: %v", c.Args().Slice())
 			}
-			return flags.loggingConfig.Apply()
+			if err := flags.loggingConfig.Apply(); err != nil {
+				return err
+			}
+			klog.InfoS("Starting power-dra-kubeletplugin", "version", info.GetVersion(), "gitCommit", info.GetGitCommit())
+			return nil
 		},
 		Action: func(c *cli.Context) error {
 			ctx := c.Context
