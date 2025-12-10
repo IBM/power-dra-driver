@@ -286,6 +286,8 @@ k8s.io/dynamic-resource-allocation v0.34.1 h1:pd9qhOeAFkn8eOO4BthAiGHQc8pu+N6TK/
 k8s.io/dynamic-resource-allocation v0.34.1/go.mod h1:Zlpqyh6EKhTVoQDe5BS31/8oMXGfG6c12ydj3ChXyuw=
 k8s.io/dynamic-resource-allocation v0.34.2 h1:SjlRGSWl6CZXoJwQNL+Y0wRfdH8PkJ4mHRNK6MMj0bY=
 k8s.io/dynamic-resource-allocation v0.34.2/go.mod h1:ul6I+gfrCmC+OCuVdN0/iykyB2sPrIqh2WyKQ3RQPCU=
+k8s.io/dynamic-resource-allocation v0.34.3 h1:8UGn1CTj1IljJa+r6HxnEDqLvcBZkv5c+Ooa6x1Oy+o=
+k8s.io/dynamic-resource-allocation v0.34.3/go.mod h1:eYjQqNaHLfqXT94lbSXEy8ZLaUg1mGJ2JCEtNWM7e7M=
 k8s.io/klog/v2 v2.130.1 h1:n9Xl7H1Xvksem4KFG4PYbdQCQxqc/tTUyrgXaOhHSzk=
 k8s.io/klog/v2 v2.130.1/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
 k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff h1:/usPimJzUKKu+m+TE36gUyGcf03XZEP0ZIKgKj35LS4=
