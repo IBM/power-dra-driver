@@ -7,13 +7,13 @@ toolchain go1.25.4
 require (
 	github.com/spf13/pflag v1.0.10
 	github.com/urfave/cli/v2 v2.27.7
-	k8s.io/api v0.34.2
-	k8s.io/apimachinery v0.34.2
-	k8s.io/client-go v0.34.2
-	k8s.io/component-base v0.34.2
+	k8s.io/api v0.34.3
+	k8s.io/apimachinery v0.34.3
+	k8s.io/client-go v0.34.3
+	k8s.io/component-base v0.34.3
 	k8s.io/dynamic-resource-allocation v0.34.2
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubelet v0.34.2
+	k8s.io/kubelet v0.34.3
 	k8s.io/kubernetes v1.34.2
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 	tags.cncf.io/container-device-interface v1.0.1
