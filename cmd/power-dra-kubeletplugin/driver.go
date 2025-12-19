@@ -121,7 +121,7 @@ func (d *driver) prepareResourceClaim(_ context.Context, claim *resourcev1.Resou
 			Requests:     preparedPB.GetRequestNames(),
 			PoolName:     preparedPB.GetPoolName(),
 			DeviceName:   preparedPB.GetDeviceName(),
-			CDIDeviceIDs: preparedPB.GetCDIDeviceIDs(),
+			CDIDeviceIDs: preparedPB.GetCdiDeviceIds(),
 		})
 	}
 
