@@ -15,7 +15,7 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubelet v0.35.0
 	k8s.io/kubernetes v1.35.1
-	k8s.io/utils v0.0.0-20260108192941-914a6e750570
+	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	tags.cncf.io/container-device-interface v1.1.0
 	tags.cncf.io/container-device-interface/specs-go v1.1.0
 )
