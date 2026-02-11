@@ -2,7 +2,7 @@ module github.com/IBM/power-dra-driver
 
 go 1.25.0
 
-toolchain go1.25.7
+toolchain go1.26.0
 
 require (
 	github.com/spf13/pflag v1.0.10
