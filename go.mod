@@ -7,13 +7,13 @@ toolchain go1.26.5
 require (
 	github.com/spf13/pflag v1.0.10
 	github.com/urfave/cli/v2 v2.27.7
-	k8s.io/api v0.36.2
-	k8s.io/apimachinery v0.36.2
-	k8s.io/client-go v0.36.2
-	k8s.io/component-base v0.36.2
-	k8s.io/dynamic-resource-allocation v0.36.2
+	k8s.io/api v0.36.3
+	k8s.io/apimachinery v0.36.3
+	k8s.io/client-go v0.36.3
+	k8s.io/component-base v0.36.3
+	k8s.io/dynamic-resource-allocation v0.36.3
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kubelet v0.36.2
+	k8s.io/kubelet v0.36.3
 	k8s.io/kubernetes v1.36.2
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	tags.cncf.io/container-device-interface v1.1.0
@@ -83,6 +83,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.3 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
