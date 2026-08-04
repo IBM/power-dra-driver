@@ -200,6 +200,11 @@ func (s *DeviceState) prepareDevices(claim *resourceapi.ResourceClaim) (Prepared
 	// each device allocation result based on their order of precedence.
 	configResultsMap := make(map[runtime.Object][]*resourceapi.DeviceRequestAllocationResult)
 	for i, result := range claim.Status.Allocation.Devices.Results {
+		// A claim may be satisfied by devices from several drivers; skip results
+		// for other drivers, the same way GetOpaqueDeviceConfigs skips their configs.
+		if result.Driver != DriverName {
+			continue
+		}
 		klog.Infof("Processing allocation result %d: Device=%v, Pool=%v, Request=%v", i, result.Device, result.Pool, result.Request)
 		if _, exists := s.allocatable[result.Device]; !exists {
 			klog.Errorf("Device %v not found in allocatable devices. Available devices: %v", result.Device, s.allocatable)
