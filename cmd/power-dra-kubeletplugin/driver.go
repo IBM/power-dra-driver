@@ -153,3 +153,7 @@ func (d *driver) unprepareResourceClaim(_ context.Context, claim kubeletplugin.N
 func (d *driver) HandleError(ctx context.Context, err error, claimUID string) {
 	klog.ErrorS(err, "Error handling resource claim", "claimUID", claimUID)
 }
+
+func (d *driver) WatchHealthStatus(_ context.Context, _ chan<- kubeletplugin.DeviceHealthReport) error {
+	return kubeletplugin.ErrHealthNotSupported
+}
