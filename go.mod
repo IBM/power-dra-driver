@@ -17,7 +17,7 @@ require (
 	k8s.io/kubernetes v1.37.0
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	tags.cncf.io/container-device-interface v1.1.0
-	tags.cncf.io/container-device-interface/specs-go v1.1.0
+	tags.cncf.io/container-device-interface/specs-go v1.1.1
 )
 
 require google.golang.org/grpc v1.83.1 // indirect
