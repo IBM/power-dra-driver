@@ -16,7 +16,7 @@ require (
 	k8s.io/kubelet v0.37.0
 	k8s.io/kubernetes v1.37.0
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
-	tags.cncf.io/container-device-interface v1.1.0
+	tags.cncf.io/container-device-interface v1.1.1
 	tags.cncf.io/container-device-interface/specs-go v1.1.1
 )
 
@@ -72,7 +72,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
