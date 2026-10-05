@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi:9.8-1790665138 as builder
+FROM registry.access.redhat.com/ubi9/ubi:9.8-1791179325 as builder
 USER root
 WORKDIR /workspace
 
