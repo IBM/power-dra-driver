@@ -2,7 +2,7 @@ module github.com/IBM/power-dra-driver
 
 go 1.26.0
 
-toolchain go1.27.2
+toolchain go1.27.3
 
 require google.golang.org/grpc v1.83.2 // indirect
 
