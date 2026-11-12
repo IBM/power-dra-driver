@@ -18,7 +18,7 @@ require (
 	k8s.io/kubelet v0.37.2
 	k8s.io/kubernetes v1.37.2
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
-	tags.cncf.io/container-device-interface v1.1.1
+	tags.cncf.io/container-device-interface v1.1.2
 	tags.cncf.io/container-device-interface/specs-go v1.1.1
 )
 
